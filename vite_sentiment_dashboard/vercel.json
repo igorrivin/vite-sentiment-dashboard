@@ -1,5 +1,1 @@
-{
-  "buildCommand": "cd vite_sentiment_dashboard && npm run build",
-  "outputDirectory": "vite_sentiment_dashboard/dist",
-  "installCommand": "cd vite_sentiment_dashboard && npm install"
-}
+{}
