@@ -1,0 +1,138 @@
+/ ===== index.html =====
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Sentiment Dashboard</title>
+    <style>
+        body {
+            background-color: #1e1e2f;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            background-color: #2a2a3e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .status.connected {
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .status.disconnected {
+            border-left: 4px solid #f44336;
+        }
+        
+        #chart {
+            margin-bottom: 10px;
+        }
+        
+        .latest-scores {
+            background-color: #2a2a3e;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .scores-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .scores-table th {
+            text-align: left;
+            border-bottom: 2px solid white;
+            padding: 10px;
+        }
+        
+        .scores-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #444;
+            color: white;
+        }
+        
+        .score-cell {
+            text-align: right;
+            color: black;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #888;
+            padding: 40px;
+        }
+        
+        .update-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .update-indicator.show {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .scores-table {
+                font-size: 14px;
+            }
+            
+            .scores-table th, .scores-table td {
+                padding: 6px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-time Sentiment Scores</h1>
+        
+        <div id="connection-status" class="status">
+            <span id="status-text">Connecting to real-time updates...</span>
+        </div>
+        
+        <div id="chart"></div>
+        
+        <div class="latest-scores">
+            <h3 id="latest-title">Latest Scores</h3>
+            <div id="latest-content" class="loading">Loading data...</div>
+        </div>
+    </div>
+    
+    <div id="update-indicator" class="update-indicator">
+        Real-time update received!
+    </div>
+
+    <script type="module" src="/main.js"></script>
+</body>
+</html>
