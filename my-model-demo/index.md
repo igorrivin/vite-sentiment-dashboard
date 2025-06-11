@@ -1,5 +1,6 @@
 ---
 layout: default
+title: DiRe-JAX - Dimensionality Reduction in JAX
 ---
 
 # DiRe-JAX: Dimensionality Reduction in JAX
