@@ -21,8 +21,10 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Global state
 let currentData = null
+let smoothedData = null
 let subscription = null
 let isConnected = false
+let currentAlpha = 0.033 // Default alpha for ~1 hour EMA
 
 // Utility functions
 function scoreToColor(score) {
@@ -292,8 +294,8 @@ async function loadAndRenderData() {
         const data = await fetchSentimentData()
         currentData = data
         
-        renderChart(data)
-        renderLatestScores(data)
+        // Apply smoothing and render
+        applyAndRenderSmoothing()
         
         if (!isConnected) {
             updateConnectionStatus(false, '- Data loaded, trying to reconnect...')
@@ -330,6 +332,9 @@ function cleanup() {
 async function init() {
     console.log('Initializing sentiment dashboard...')
     
+    // Setup UI controls
+    setupSmoothingControls()
+    
     // Load initial data
     await loadAndRenderData()
     
@@ -346,6 +351,126 @@ async function init() {
             await loadAndRenderData()
         }
     }, 5 * 60 * 1000)
+}
+
+// EMA smoothing functions
+function applyEMASmoothing(data, alpha) {
+    if (!data || data.length === 0 || alpha === 0) {
+        return data
+    }
+    
+    // Group data by ticker for independent EMA calculation
+    const tickerData = {}
+    const timestamps = []
+    
+    // Collect all unique timestamps and tickers
+    data.forEach(row => {
+        timestamps.push(row.timestamp)
+        Object.keys(row).forEach(key => {
+            if (key !== 'timestamp') {
+                if (!tickerData[key]) {
+                    tickerData[key] = []
+                }
+                tickerData[key].push({
+                    timestamp: row.timestamp,
+                    value: row[key]
+                })
+            }
+        })
+    })
+    
+    // Apply EMA to each ticker independently
+    const smoothedTickerData = {}
+    Object.keys(tickerData).forEach(ticker => {
+        const values = tickerData[ticker]
+        const smoothed = []
+        
+        if (values.length > 0) {
+            // First value stays the same
+            smoothed.push({
+                timestamp: values[0].timestamp,
+                value: values[0].value
+            })
+            
+            // Apply EMA formula: EMA_t = α * Value_t + (1-α) * EMA_(t-1)
+            for (let i = 1; i < values.length; i++) {
+                const currentValue = values[i].value
+                const previousEMA = smoothed[i-1].value
+                const newEMA = alpha * currentValue + (1 - alpha) * previousEMA
+                
+                smoothed.push({
+                    timestamp: values[i].timestamp,
+                    value: newEMA
+                })
+            }
+        }
+        
+        smoothedTickerData[ticker] = smoothed
+    })
+    
+    // Reconstruct the data structure
+    const result = []
+    timestamps.forEach(timestamp => {
+        const row = { timestamp }
+        Object.keys(smoothedTickerData).forEach(ticker => {
+            const tickerPoint = smoothedTickerData[ticker].find(
+                point => point.timestamp.getTime() === timestamp.getTime()
+            )
+            if (tickerPoint) {
+                row[ticker] = tickerPoint.value
+            }
+        })
+        result.push(row)
+    })
+    
+    return result
+}
+
+// UI event handlers for smoothing controls
+function setupSmoothingControls() {
+    const smoothingSelect = document.getElementById('smoothing-select')
+    const customContainer = document.getElementById('custom-alpha-container')
+    const alphaSlider = document.getElementById('alpha-slider')
+    const alphaValue = document.getElementById('alpha-value')
+    
+    // Handle dropdown change
+    smoothingSelect.addEventListener('change', (e) => {
+        const value = e.target.value
+        
+        if (value === 'custom') {
+            customContainer.style.display = 'flex'
+            currentAlpha = parseFloat(alphaSlider.value)
+        } else {
+            customContainer.style.display = 'none'
+            currentAlpha = parseFloat(value)
+        }
+        
+        // Re-render with new smoothing
+        applyAndRenderSmoothing()
+    })
+    
+    // Handle slider change
+    alphaSlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value)
+        alphaValue.textContent = value.toFixed(3)
+        currentAlpha = value
+        
+        // Re-render with new smoothing (debounced)
+        clearTimeout(alphaSlider.debounceTimer)
+        alphaSlider.debounceTimer = setTimeout(() => {
+            applyAndRenderSmoothing()
+        }, 200)
+    })
+}
+
+function applyAndRenderSmoothing() {
+    if (!currentData) return
+    
+    console.log('Applying smoothing with alpha:', currentAlpha)
+    smoothedData = applyEMASmoothing(currentData, currentAlpha)
+    
+    renderChart(smoothedData)
+    renderLatestScores(smoothedData)
 }
 
 // Handle page visibility changes

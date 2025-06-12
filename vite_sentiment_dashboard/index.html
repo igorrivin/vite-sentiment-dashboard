@@ -124,6 +124,27 @@
             <span id="status-text">Connecting to real-time updates...</span>
         </div>
         
+        <div class="smoothing-controls" style="background-color: #2a2a3e; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="margin: 0 0 10px 0;">Smoothing Controls</h4>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <label for="smoothing-select" style="font-weight: bold;">Mode:</label>
+                <select id="smoothing-select" style="padding: 5px; background-color: #1e1e2f; color: white; border: 1px solid #444; border-radius: 3px;">
+                    <option value="0">No Smoothing</option>
+                    <option value="0.1">Light Smoothing (α=0.1)</option>
+                    <option value="0.033" selected>Medium Smoothing (α=0.033, ~1hr)</option>
+                    <option value="0.01">Heavy Smoothing (α=0.01)</option>
+                    <option value="custom">Custom</option>
+                </select>
+                
+                <div id="custom-alpha-container" style="display: none; align-items: center; gap: 10px;">
+                    <label for="alpha-slider" style="font-weight: bold;">Alpha:</label>
+                    <input type="range" id="alpha-slider" min="0.001" max="0.2" step="0.001" value="0.033" 
+                           style="width: 100px;">
+                    <span id="alpha-value" style="font-family: monospace; background-color: #1e1e2f; padding: 2px 6px; border-radius: 3px;">0.033</span>
+                </div>
+            </div>
+        </div>
+        
         <div id="chart"></div>
         
         <div class="latest-scores">
