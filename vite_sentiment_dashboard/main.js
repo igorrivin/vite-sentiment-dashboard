@@ -5,10 +5,14 @@ import Plotly from 'plotly.js-dist'
 // Access environment variables (available at build time)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const tableName = import.meta.env.VITE_TABLE_NAME || 'sentiment_scores'
+const appTitle = import.meta.env.VITE_APP_TITLE || 'Sentiment Dashboard'
 
 console.log('Environment check:')
 console.log('Supabase URL:', supabaseUrl ? 'Present' : 'Missing')
 console.log('Supabase Key:', supabaseKey ? 'Present' : 'Missing')
+console.log('Table Name:', tableName)
+console.log('App Title:', appTitle)
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase environment variables')
@@ -78,7 +82,7 @@ async function fetchSentimentData(days = 7) {
     try {
         console.log('Fetching sentiment data...')
         const { data, error } = await supabase
-            .from('sentiment_scores')
+            .from(tableName)
             .select('*')
             .gte('timestamp', beginDate.toISOString())
             .order('timestamp', { ascending: true })
@@ -260,7 +264,7 @@ function setupRealtimeSubscription() {
             { 
                 event: '*', 
                 schema: 'public', 
-                table: 'sentiment_scores' 
+                table: tableName 
             }, 
             async (payload) => {
                 console.log('Real-time update received:', payload)
@@ -331,6 +335,15 @@ function cleanup() {
 // Initialize the application
 async function init() {
     console.log('Initializing sentiment dashboard...')
+    
+    // Set page title
+    document.title = appTitle
+    
+    // Update main heading
+    const mainHeading = document.querySelector('h1')
+    if (mainHeading) {
+        mainHeading.textContent = appTitle
+    }
     
     // Setup UI controls
     setupSmoothingControls()
