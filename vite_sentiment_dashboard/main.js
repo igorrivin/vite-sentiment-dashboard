@@ -187,7 +187,7 @@ function renderChart(data) {
             anchor: `y${axisNum}`
         }
         layout[`yaxis${axisNum}`] = {
-            title: `${ticker} Sentiment`,
+            title: ticker,
             gridcolor: '#444',
             color: 'white',
             anchor: `x${axisNum}`
