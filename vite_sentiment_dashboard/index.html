@@ -124,10 +124,23 @@
             <span id="status-text">Connecting to real-time updates...</span>
         </div>
         
-        <div class="smoothing-controls" style="background-color: #2a2a3e; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <h4 style="margin: 0 0 10px 0;">Smoothing Controls</h4>
+        <div class="controls" style="background-color: #2a2a3e; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="margin: 0 0 15px 0;">Dashboard Controls</h4>
+            
+            <!-- Time Period Controls -->
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #444;">
+                <label for="time-period-select" style="font-weight: bold;">Time Period:</label>
+                <select id="time-period-select" style="padding: 5px; background-color: #1e1e2f; color: white; border: 1px solid #444; border-radius: 3px;">
+                    <option value="0.25">Last 6 Hours</option>
+                    <option value="1" selected>Last 24 Hours</option>
+                    <option value="3">Last 3 Days</option>
+                    <option value="7">Last 7 Days</option>
+                </select>
+            </div>
+            
+            <!-- Smoothing Controls -->
             <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                <label for="smoothing-select" style="font-weight: bold;">Mode:</label>
+                <label for="smoothing-select" style="font-weight: bold;">Smoothing:</label>
                 <select id="smoothing-select" style="padding: 5px; background-color: #1e1e2f; color: white; border: 1px solid #444; border-radius: 3px;">
                     <option value="0">No Smoothing</option>
                     <option value="0.1">Light Smoothing (α=0.1)</option>

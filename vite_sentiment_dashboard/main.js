@@ -29,6 +29,7 @@ let smoothedData = null
 let subscription = null
 let isConnected = false
 let currentAlpha = 0.033 // Default alpha for ~1 hour EMA
+let currentTimePeriod = 1 // Default to 1 day
 
 // Utility functions
 function scoreToColor(score) {
@@ -295,7 +296,7 @@ function setupRealtimeSubscription() {
 // Data loading and rendering
 async function loadAndRenderData() {
     try {
-        const data = await fetchSentimentData()
+        const data = await fetchSentimentData(currentTimePeriod)
         currentData = data
         
         // Apply smoothing and render
@@ -346,7 +347,7 @@ async function init() {
     }
     
     // Setup UI controls
-    setupSmoothingControls()
+    setupControls()
     
     // Load initial data
     await loadAndRenderData()
@@ -439,8 +440,19 @@ function applyEMASmoothing(data, alpha) {
     return result
 }
 
-// UI event handlers for smoothing controls
-function setupSmoothingControls() {
+// UI event handlers for controls
+function setupControls() {
+    // Time period controls
+    const timePeriodSelect = document.getElementById('time-period-select')
+    timePeriodSelect.addEventListener('change', (e) => {
+        currentTimePeriod = parseFloat(e.target.value)
+        console.log('Time period changed to:', currentTimePeriod, 'days')
+        
+        // Reload data with new time period
+        loadAndRenderData()
+    })
+    
+    // Smoothing controls
     const smoothingSelect = document.getElementById('smoothing-select')
     const customContainer = document.getElementById('custom-alpha-container')
     const alphaSlider = document.getElementById('alpha-slider')
