@@ -77,19 +77,15 @@ function updateConnectionStatus(connected, message = '') {
 
 // Data fetching
 async function fetchSentimentData(days = 7) {
-    const beginDate = new Date()
-    beginDate.setDate(beginDate.getDate() - days)
-    
     try {
-        console.log('Fetching sentiment data...')
-        const { data, error } = await supabase
-            .from(tableName)
-            .select('*')
-            .gte('timestamp', beginDate.toISOString())
-            .order('timestamp', { ascending: true })
+        console.log('Fetching sentiment data for', days, 'days using smart downsampling...')
+        const { data, error } = await supabase.rpc('get_smart_sentiment_data', {
+            table_name: tableName,
+            days_back: days
+        })
         
         if (error) {
-            console.error('Supabase error:', error)
+            console.error('Supabase RPC error:', error)
             throw error
         }
         
