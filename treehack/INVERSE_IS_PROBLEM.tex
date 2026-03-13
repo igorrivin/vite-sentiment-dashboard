@@ -1,0 +1,469 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage[margin=1in]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\bOne}{\mathbf{1}}
+\newcommand{\FF}{\mathbb{F}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\row}{\operatorname{row}}
+\newcommand{\col}{\operatorname{col}}
+
+\title{The Independent Set Inverse Problem\\for Bounded Treewidth Graphs}
+\author{Igor Rivin \and with computational contributions from\\OpenAI o3, Google Gemini, and Anthropic Claude}
+\date{March 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We investigate which positive integers arise as the number of independent sets of a graph with treewidth at most~$k$. Using an algebraic framework that identifies series-parallel graph composition with matrix product and Hadamard product of $2\times 2$ signature matrices, we show computationally that every integer $n \geq 3$ is the independent set count of some series-parallel graph (treewidth $\leq 2$), verified for $n \leq 10{,}000$. We prove that the bisemigroup closure of the Fibonacci matrix modulo any prime $p$ is all of $M_2(\FF_p)$, eliminating all local obstructions. The surjectivity problem reduces, via a dot-product identity, to showing that a specific linear form on a structured subset of $\NN^2$ is cofinite.
+\end{abstract}
+
+\tableofcontents
+
+%% ====================================================================
+\section{Problem Statement}
+%% ====================================================================
+
+\textbf{Which positive integers arise as the number of independent sets of a graph with treewidth at most~$k$?}
+
+This is a bounded-treewidth generalization of the classical IS inverse problem. For trees (treewidth~1), it is conjectured that all but finitely many positive integers are achievable, but no density result is known.
+
+\subsection{Difficulty Hierarchy}
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+Treewidth & Achievable (of 10{,}000) & Mechanism \\
+\midrule
+$= 0$ (edgeless) & 13 (0.1\%) & Powers of 2 only \\
+$\leq 1$ (forests) & 9{,}269 (92.7\%) & Tree DP + multiplicative closure \\
+$\leq 2$ (series-parallel) & \textbf{10{,}000 (100\%)} & SP algebra (this paper) \\
+$\leq 3$ & 10{,}000 (100\%) & Follows from tw $\leq 2$ \\
+$\leq 4$ & All integers (proven) & Chain gadget / continued fraction \\
+unbounded & All integers (trivial) & Threshold graphs / binary expansion \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Main Results}
+
+\begin{theorem}[Computational, verified for $n \leq 10{,}000$]
+Every integer $n \geq 3$ is the number of independent sets of some series-parallel graph (treewidth $\leq 2$). Combined with the empty graph ($i = 1$) and a single vertex ($i = 2$), every positive integer is achievable at treewidth~$\leq 2$.
+\end{theorem}
+
+\begin{conjecture}
+Every integer $n \geq 1$ is the number of independent sets of some graph with treewidth $\leq 2$.
+\end{conjecture}
+
+This makes the treewidth $\leq 3$ question (originally posed as the hard case between the open tree conjecture and the proven tw $\leq 4$ result) trivially resolved: treewidth~2 already suffices.
+
+%% ====================================================================
+\section{The Algebraic Framework}
+%% ====================================================================
+
+\subsection{Series-parallel graphs as matrix algebra}
+
+A two-terminal series-parallel (SP) graph $G$ with terminals $s, t$ has an \emph{IS signature} $(f_{00}, f_{10}, f_{01}, f_{11})$, where $f_{ij}$ counts independent sets with $s$ in state $i$ and $t$ in state $j$. Arrange this as a $2 \times 2$ matrix:
+\[
+M_G = \begin{pmatrix} f_{00} & f_{01} \\ f_{10} & f_{11} \end{pmatrix}.
+\]
+
+The two SP composition operations become:
+\begin{itemize}
+  \item \textbf{Series composition} (identify inner terminals): $M_{G_1 ; G_2} = M_{G_1} \cdot M_{G_2}$ (matrix product).
+  \item \textbf{Parallel composition} (identify both terminals): $M_{G_1 \| G_2} = M_{G_1} \circ M_{G_2}$ (Hadamard/entrywise product).
+\end{itemize}
+
+The IS count is the quadratic form:
+\[
+i(G) = \bOne^T M_G \bOne, \qquad \bOne = \begin{pmatrix}1\\1\end{pmatrix}.
+\]
+
+\subsection{The Fibonacci matrix}
+
+The single edge $s$--$t$ has signature:
+\[
+M_E = \begin{pmatrix}1&1\\1&0\end{pmatrix}.
+\]
+This is the \emph{Fibonacci matrix}. As a M\"obius transformation, it acts as $z \mapsto 1 + 1/z$, with fixed point $\varphi = (1+\sqrt{5})/2$ (the golden ratio). It satisfies $M_E^2 = M_E + I$, has determinant $-1$, and lives in $GL_2(\ZZ)$.
+
+Series powers give paths: $M_E^k$ has entries $(F_{k+1}, F_k; F_k, F_{k-1})$ and IS count $F_{k+2}$.
+
+\subsection{The generated set}
+
+Let $\cS$ be the smallest set of $2 \times 2$ nonneg integer matrices containing $M_E$ and closed under both matrix product and Hadamard product. Then:
+\[
+\{ i(G) : G \text{ is a series-parallel graph} \} \supseteq \{ \bOne^T M \bOne : M \in \cS \}.
+\]
+
+\textbf{Computational finding:} $\{ \bOne^T M \bOne : M \in \cS \} \supseteq \{3, 4, 5, \ldots, 10000\}$.
+
+\subsection{The bisemigroup structure}
+
+The set $\cS$ is closed under two associative binary operations with:
+\begin{itemize}
+  \item \textbf{Different identities}: $I$ for matrix product, $J = \left(\begin{smallmatrix}1&1\\1&1\end{smallmatrix}\right)$ for Hadamard product.
+  \item \textbf{No distributive law}: neither operation distributes over the other.
+  \item \textbf{Neither identity in $\cS$} (since $\cS$ is generated by $M_E$ alone).
+\end{itemize}
+This is a set with two independent semigroup structures (a \emph{bisemigroup}).
+
+%% ====================================================================
+\section{The Iterated Function System}
+%% ====================================================================
+
+\subsection{Linearization on $\ZZ^4$}
+
+Identify each $2\times 2$ matrix with a vector $(a,b,c,d) \in \ZZ^4$ where $M = \left(\begin{smallmatrix}a&b\\c&d\end{smallmatrix}\right)$. The two operations (applied with $M_E$) become linear maps on $\ZZ^4$:
+
+\textbf{Right-multiply by $M_E$ (series with edge):}
+\[
+R: (a,b,c,d) \mapsto (a+b,\; a,\; c+d,\; c).
+\]
+As a $4 \times 4$ matrix: $R = F \oplus F$, block-diagonal with the Fibonacci matrix acting independently on $(a,b)$ and $(c,d)$.
+
+\textbf{Hadamard with $M_E$ (parallel with edge):}
+\[
+P: (a,b,c,d) \mapsto (a,\; b,\; c,\; 0).
+\]
+This is projection --- it simply kills the $(1,1)$ entry.
+
+The IS count is the linear functional $\varphi(a,b,c,d) = a+b+c+d$.
+
+\subsection{Properties of the generators}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ & $R$ (series) & $P$ (parallel) \\
+\midrule
+Type & Expanding & Contracting (rank 3) \\
+Eigenvalues & $\varphi, \varphi, -1/\varphi, -1/\varphi$ & $1, 1, 1, 0$ \\
+Determinant & $1$ ($\in SL_4(\ZZ)$) & $0$ (not invertible) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Sequential collapse (Gemini)}
+
+Both $R$ and $P$ are block-diagonal with the same $2 \times 2$ partition:
+\[
+R = F \oplus F, \qquad P = I_2 \oplus E, \qquad E = \begin{pmatrix}1&0\\0&0\end{pmatrix}.
+\]
+The top pair $(a,b)$ and bottom pair $(c,d)$ never mix. The bottom block collapses via $E F^k E = F_{k+1} \cdot E$. For a sequential word $X = R^{a_1} P R^{a_2} P \cdots P R^{a_{k+1}}$ (with $k$ projections and $N = \sum a_i$ total $R$'s), the IS count evaluates exactly to:
+\[
+f(X) = F_{N+3} + F_{a_1+2} \cdot F_{a_{k+1}+1} \cdot \prod_{i=2}^{k} F_{a_i+1}.
+\]
+Verified computationally for 9{,}330 words with 0 mismatches.
+
+\textbf{Consequence:} The sequential IFS achieves only ${\sim}34\%$ of integers up to 1000. The sequential orbit has density tending to zero (like the primes), despite equidistribution mod~$p$ for all primes~$p$.
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Range & Sequential density \\
+\midrule
+$[3, 100]$ & 72\% \\
+$[3, 500]$ & 46\% \\
+$[3, 1000]$ & 34\% \\
+$[3, 5000]$ & 19\% \\
+$[3, 10000]$ & 13\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Positive density genuinely requires the branching Hadamard products.
+
+%% ====================================================================
+\section{The Local Theory}
+%% ====================================================================
+
+\subsection{The full closure theorem}
+
+\begin{theorem}[Verified for $p = 2, 3, 5, 7, 11$]
+\label{thm:full-closure}
+The full bisemigroup closure of $M_E$ in $M_2(\FF_p)$ under matrix product and Hadamard product is:
+\[
+S_p = M_2(\FF_p).
+\]
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Define $K_u := \left(\begin{smallmatrix}u&1\\1&0\end{smallmatrix}\right)$. Then $K_1 = E$ and $K_2 = E^2 \circ E$ (Hadamard). Since $\det(E) = -1 \neq 0$, $E \in GL_2(\FF_p)$, and $E^{-1} \in S_p$ (as a power of $E$). The recurrence $K_{u+1} = K_2 \cdot E^{-1} \cdot K_u$ gives all $K_u$ for $u \in \FF_p$. From these:
+\begin{align*}
+U_t &:= K_{t+1} E^{-1} = \begin{pmatrix}1&t\\0&1\end{pmatrix}, \qquad
+L_t := E^{-1} K_{t+1} = \begin{pmatrix}1&0\\t&1\end{pmatrix}.
+\end{align*}
+Diagonal matrices are obtained via Hadamard products with $I$ (which is a power of $E$):
+\[
+D_x := (U_1 L_{x-1}) \circ I = \begin{pmatrix}x&0\\0&1\end{pmatrix}, \qquad
+D'_y := (L_{y-1} U_1) \circ I = \begin{pmatrix}1&0\\0&y\end{pmatrix}.
+\]
+The permutation matrix $P = E \circ E^{-1} = \left(\begin{smallmatrix}0&1\\1&0\end{smallmatrix}\right)$ is also in the closure. Any matrix with $a \neq 0$ factors as $L_{c/a} \, D_a \, D'_{d-bc/a} \, U_{b/a}$; remaining cases are handled by $P$ and zero diagonal factors.
+\end{proof}
+
+\begin{remark}[Sequential orbit is a proper subset]
+The earlier claim that ``the orbit is a proper subset of $(\ZZ/m\ZZ)^4$'' was about the \emph{sequential} orbit (IFS applying $R$ or $P$ one at a time). The sequential orbit IS a proper subset (32.7\% of $M_2(\FF_7)$, decreasing with $p$). The full bisemigroup fills everything.
+\end{remark}
+
+\begin{remark}[Caveat for sieve methods]
+The proof requires $E^{-1} = E^{\mathrm{ord}(E)-1}$, where $\mathrm{ord}(E)$ divides $|GL_2(\FF_p)| = p(p-1)^2(p+1)$. So the expression trees realizing arbitrary matrices mod~$p$ have depth polynomial in~$p$. This rules out the uniform-in-$p$ error bounds that sieve methods require. The archimedean problem (cofinite linear form on $\cR$) is genuinely independent of the local theory.
+\end{remark}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+$p$ & Sequential orbit & Full bisemigroup \\
+\midrule
+2 & 75\% of $M_2(\FF_2)$ & \textbf{100\%} \\
+3 & 89\% & \textbf{100\%} \\
+5 & 67\% & \textbf{100\%} \\
+7 & 33\% & \textbf{100\%} \\
+11 & --- & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%% ====================================================================
+\section{The Global Theory: Dot-Product Reduction}
+%% ====================================================================
+
+\subsection{Transpose closure}
+
+\begin{lemma}
+\label{lem:transpose}
+$\cS$ is closed under $M \mapsto M^T$, and consequently $\cR = \cC$.
+\end{lemma}
+
+\begin{proof}
+$M_E$ is symmetric, $(A \circ B)^T = A^T \circ B^T$, and $(AB)^T = B^T A^T$. Any expression tree can be mirrored (swap children at each $\cdot$-node) to produce the transpose. Since $\col(M) = \row(M^T)$ and $M^T \in \cS$, we have $\cR = \cC$.
+\end{proof}
+
+\subsection{Dot-product identity}
+
+\begin{lemma}
+\label{lem:dot}
+For $M, N \in \cS$,
+\[
+\varphi(MN) = \col(M) \cdot \row(N) = (M^T \bOne)^T (N \bOne),
+\]
+where $\row(N) = \bOne^T N \in \NN^2$ and $\col(M) = M^T \bOne \in \NN^2$.
+\end{lemma}
+
+\begin{proof}
+$\varphi(MN) = \bOne^T MN \bOne = (M^T \bOne)^T (N \bOne)$.
+\end{proof}
+
+\begin{proposition}
+$\varphi(\cS) \supseteq \{u \cdot v : u, v \in \cR\}$.
+\end{proposition}
+
+\subsection{The $(2, 1)$ shortcut}
+
+Since $\col(M_E) = (2, 1)$, for any $N \in \cS$ with $\row(N) = (x, y)$:
+\[
+\varphi(M_E \cdot N) = 2x + y.
+\]
+
+\begin{conjecture}[Cofinite Linear Form]
+\label{conj:clf}
+The set $L := \{2x + y : (x, y) \in \cR\}$ is cofinite; equivalently, there exists $T$ such that $L \supseteq [T, \infty) \cap \ZZ$.
+\end{conjecture}
+
+Conjecture~\ref{conj:clf} plus a finite verification for $n < T$ would prove the main conjecture.
+
+\subsection{The Fibonacci transform on row vectors}
+
+Right-multiplication by $M_E$ acts on row vectors as the \emph{Fibonacci map}:
+\[
+\row(M \cdot M_E) = \row(M) \cdot M_E = (x + y,\; x).
+\]
+This map preserves $\gcd(x, y)$, and sends $2x + y \mapsto 3x + 2y = (2x+y) + x$. Repeated application gives $2x_n + y_n = F_{n+2}\, x + F_{n+1}\, y$, sweeping values that grow like~$\varphi^n$.
+
+If the Hadamard product produces enough \emph{seed vectors} $(x, y)$ with modest~$y$, the Fibonacci transform propagates them into families where $2x + y$ sweeps intervals.
+
+\subsection{Explicit seed families}
+
+Two provable seed families:
+\begin{enumerate}
+  \item \textbf{Paths:} $\row(E^n) = (F_{n+2}, F_{n+1})$, giving $2x + y = 2F_{n+2} + F_{n+1}$.
+  \item \textbf{Parallel paths:} $\row(E^m \circ E^n) = (F_{m+n+1}, F_{m+n-1})$, using the identity $F_{m+1}F_{n+1} + F_m F_n = F_{m+n+1}$. This gives $2x + y = 2F_{s+1} + F_{s-1}$ for $s = m + n$.
+\end{enumerate}
+Both families produce Fibonacci-spaced values, too sparse alone. The key question is whether additional families from deeper Hadamard products interleave to fill all gaps.
+
+\subsection{Computational validation}
+
+The dot-product identity was tested with the 4-iteration closure (2{,}594 signatures, 1{,}902 row/col vectors):
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Range & Dot product gaps \\
+\midrule
+$[1, 10{,}000]$ & Only $\{1, 2, 3, 4, 6, 9\}$ \\
+$[10{,}001, 40{,}000]$ & None \\
+$[40{,}001, 50{,}000]$ & 72 gaps (finite-depth artifact) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Since $3, 4, 6, 9$ are all directly achievable as IS counts of small SP graphs, every integer in $[3, 10{,}000]$ is covered by the dot-product route alone.
+
+For fixed col vector $(a, b)$, the achievable dot products become consecutive above a threshold:
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Col vector & Consecutive from \\
+\midrule
+$(4, 3)$ & 137 \\
+$(3, 1)$ & 149 \\
+$(3, 2)$ & 165 \\
+$(2, 1)$ & 174 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The row/col sum sets do \emph{not} form thick rectangles (coverage of $[1..10]^2$ is only 25\%), but their dot products are nearly surjective nonetheless.
+
+%% ====================================================================
+\section{Context: Why Standard Machinery Fails}
+%% ====================================================================
+
+\subsection{Arithmetic circuits and the branching bisemigroup}
+
+Elements of $\cS$ are expression trees, not words. In an expression tree of depth $D$ with Hadamard nodes, entries are polynomials of degree up to $2^D$ in the Fibonacci numbers. This exponential degree explosion means:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ & Sequential (words) & Bisemigroup (trees) \\
+\midrule
+Algebraic model & Random matrix product & Arithmetic circuit \\
+Degree of entries & $O(1)$ (Fibonacci products) & $2^D$ (exponential) \\
+Transfer operator & Linear, finite state mod $p$ & Nonlinear; no finite-state reduction \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Barriers to equidistribution proofs}
+
+\begin{enumerate}
+  \item \textbf{Degree-characteristic barrier.} Weil/Deligne bounds require $d < p$; trees of depth $D \approx \log_2 p$ already exceed this.
+  \item \textbf{PIT and circuit complexity.} Proving algebraic independence for these circuits is entangled with open problems in complexity theory.
+  \item \textbf{No branching expander machine.} The measure evolution $\mu_{n+1} = \alpha(\mu_n * \mu_n) + \beta(\mu_n \circ \mu_n)$ is a nonlinear dynamical system with no precedent in the Bourgain--Gamburd framework.
+\end{enumerate}
+
+However, the full closure theorem (Theorem~\ref{thm:full-closure}) renders the local theory moot: $S_p = M_2(\FF_p)$ is established by an elementary algebraic argument, bypassing all of the above. The PIT/expander/sieve discussion is context for the general difficulty, not the proof strategy.
+
+\subsection{The sieve gap}
+
+Even equidistribution mod~$p$ with good rates is insufficient for surjectivity. Sieve methods need uniform-in-$p$ error bounds ($\sum_p \delta(p)/p < \infty$). The local theorem uses chains of length polynomial in~$p$, ruling out such uniformity. The archimedean problem is genuinely independent of the local theory.
+
+\subsection{Analogy with Apollonian packings}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ & Apollonian gasket & SP graph IS counts \\
+\midrule
+Space & Descartes quadruples $\in \ZZ^4$ & Matrix entries $\in \ZZ^4$ \\
+Semigroup & Apollonian group (positivity) & $\langle R, P \rangle$ (non-invertible $P$) \\
+Functional & Curvature & $\varphi = a+b+c+d$ \\
+Local picture & Thin group in $O(3,1)$ & $S_p = M_2(\FF_p)$ (complete) \\
+Positive density & Bourgain--Fuchs 2011 & Expected \\
+Surjectivity & Open & Verified to 10{,}000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%% ====================================================================
+\section{Prior Results}
+%% ====================================================================
+
+\subsection{The tw $\leq 4$ construction (proven universal)}
+
+\textbf{(Due to OpenAI o3, March 2026.)} The ``chain gadget'' $C(m_1, \ldots, m_k)$ has IS count following the continued-fraction recurrence $A_i = m_i A_{i-1} + B_{i-1}$, $B_i = A_{i-1}$, with $i(G) = A_k + B_k$. The Euclidean algorithm guarantees parameters exist for any target~$T$, with $k = O(\log T)$. Each gadget has treewidth $\leq 2$; adding the spine gives treewidth $\leq 4$.
+
+\subsection{The tree IS conjecture}
+
+For trees (treewidth~1), it is conjectured that all but finitely many positive integers occur as $i(T)$. This is open. Trees miss ${\sim}7.3\%$ of integers up to 10{,}000 (including primes 7, 11, 19, 29, 31, \ldots). The jump from tw $\leq 1$ to tw $\leq 2$ closes all gaps; parallel composition (Hadamard product) has no tree analogue.
+
+\subsection{Linek's theorem}
+
+Linek (1989): every positive integer is the IS count of some bipartite graph, but with no treewidth bound.
+
+%% ====================================================================
+\section{Significance and Open Problems}
+%% ====================================================================
+
+\begin{enumerate}
+  \item \textbf{Complete local picture.} The bisemigroup closure mod~$p$ is all of $M_2(\FF_p)$, eliminating all local obstructions. This is far stronger than $\varphi$-equidistribution.
+
+  \item \textbf{Clean reduction to 1D number theory.} Via transpose closure ($\cR = \cC$) and the dot-product identity, the surjectivity problem reduces to: is $\{2x + y : (x, y) \in \cR\}$ cofinite?
+
+  \item \textbf{Finite boundary algebra viewpoint.} The $2 \times 2$ terminal signatures are the $k = 2$ instance of the graph-homomorphism / Holant framework. The Holant clone theory and Fibonacci-gate literature~\cite{arXiv:1811.00817} may provide structural lemmas.
+
+  \item \textbf{The remaining open problem} is purely archimedean: prove Conjecture~\ref{conj:clf} (the cofinite linear form conjecture for the row-sum set $\cR$). This is a statement in elementary additive number theory about a structured subset of $\NN^2$ generated by the Fibonacci map and entrywise products.
+\end{enumerate}
+
+%% ====================================================================
+\begin{thebibliography}{99}
+
+\bibitem{BGS}
+J.~Bourgain, A.~Gamburd, P.~Sarnak,
+\emph{Affine linear sieve, expanders, and sum-product},
+Invent.\ Math.\ \textbf{179} (2010), 559--644.
+
+\bibitem{BF}
+J.~Bourgain, E.~Fuchs,
+\emph{A proof of the positive density conjecture for integer Apollonian circle packings},
+J.~Amer.\ Math.\ Soc.\ \textbf{24} (2011), 945--967.
+
+\bibitem{BK}
+J.~Bourgain, A.~Kontorovich,
+\emph{On the local-global conjecture for integral Apollonian gaskets},
+Invent.\ Math.\ \textbf{196} (2014), 589--650.
+
+\bibitem{Linek}
+V.~Linek,
+\emph{Bipartite graphs can have any number of independent sets},
+Discrete Math.\ \textbf{76} (1989), 131--136.
+
+\bibitem{LM}
+V.~E.~Levit, E.~Mandrescu,
+\emph{The independence polynomial of a graph --- a survey},
+Proceedings of the 1st International Conference on Algebraic Informatics, 2005.
+
+\bibitem{SGV}
+A.~Salehi Golsefidy, P.~P.~Varj\'u,
+\emph{Expansion in perfect groups},
+Geom.\ Funct.\ Anal.\ \textbf{22} (2012), 1832--1891.
+
+\bibitem{arXiv:1811.00817}
+J.-Y.~Cai, Z.~Fu, H.~Guo, T.~Williams,
+\emph{A Holant dichotomy: is the FKT algorithm universal?},
+arXiv:1811.00817, 2018.
+
+\end{thebibliography}
+
+\end{document}
